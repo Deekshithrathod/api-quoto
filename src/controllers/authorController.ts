@@ -19,6 +19,8 @@ export const getAuthors = async (
 		skip: offset,
 		take: limit,
 	});
+	const totalAuthors = await prisma.author.count();
+
 	if (authors.length === 0) {
 		return next(
 			createCustomError(
@@ -28,7 +30,10 @@ export const getAuthors = async (
 		);
 	}
 
-	res.json({ data: { authors } });
+	res.json({
+		data: { authors },
+		pagination: { total: totalAuthors, limit, offset },
+	});
 };
 
 export const getAuthorById = async (
