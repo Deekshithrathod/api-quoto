@@ -1,28 +1,52 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from "express";
+import { createCustomError } from "../errors/customError";
 
 const prisma = new PrismaClient();
 
-export const getAuthors = async (req: Request, res: Response) => {
-  const limit = req.query.limit || 10;
-  const offset = req.query.offset || 0;
+export const getAuthors = async (
+	req: Request,
+	res: Response,
+	next: Function
+) => {
+	let limit = Number(req.query.limit) || 10;
+	if (limit > 10) {
+		limit = 10;
+	}
+	const offset = Number(req.query.offset) || 0;
 
-  console.log(limit, offset);
+	const authors = await prisma.author.findMany({
+		skip: offset,
+		take: limit,
+	});
+	if (authors.length === 0) {
+		return next(
+			createCustomError(
+				`Could not find authors with limit: ${limit} and offset: ${offset}`,
+				404
+			)
+		);
+	}
 
-  const authors = await prisma.author.findMany();
-
-  // paginate response & add Internal Server Error if there's a DB connection failures
-  res.json({ data: authors });
+	res.json({ data: { authors } });
 };
 
-export const getAuthor = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const author = await prisma.author.findUnique({
-    where: { id: Number(id) },
-  });
-  if (!author) {
-    throw new Error("Author not found");
-  }
+export const getAuthorById = async (
+	req: Request,
+	res: Response,
+	next: Function
+) => {
+	const { id } = req.params;
+	if (!id) {
+		return next(createCustomError(`Please provide id`, 400));
+	}
+	const author = await prisma.author.findUnique({
+		where: { id: Number(id) },
+	});
 
-  res.json({ data: { author } });
+	if (!author) {
+		return next(createCustomError(`Could not find author with id: ${id}`, 404));
+	}
+
+	res.json({ data: { author } });
 };
