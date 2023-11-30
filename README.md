@@ -9,7 +9,7 @@
 
 - Exress
 - Prisma
-- Postgres
+- Postgres (from the wonderful folks at [Neon.tech](https://neon.tech) )
 
 ## API End points & response
 
