@@ -9,15 +9,18 @@ export const getAuthors = async (
 	res: Response,
 	next: Function
 ) => {
-	let limit = Number(req.query.limit) || 10;
-	if (limit > 10) {
-		limit = 10;
+	let limit = Number(req.query.limit) || 100;
+	if (limit > 100) {
+		limit = 100;
 	}
 	const offset = Number(req.query.offset) || 0;
 
 	const authors = await prisma.author.findMany({
 		skip: offset,
 		take: limit,
+		select: {
+			name: true,
+		},
 	});
 	const totalAuthors = await prisma.author.count();
 
@@ -31,8 +34,8 @@ export const getAuthors = async (
 	}
 
 	res.json({
-		data: { authors },
 		pagination: { total: totalAuthors, limit, offset },
+		data: { authors },
 	});
 };
 

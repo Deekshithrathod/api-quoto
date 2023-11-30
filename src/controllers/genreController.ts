@@ -9,15 +9,21 @@ export const getAllGenres = async (
 	res: Response,
 	next: Function
 ) => {
-	let limit = Number(req.query.limit) || 10;
-	if (limit > 10) {
-		limit = 10;
+	let limit = Number(req.query.limit) || 100;
+	if (limit > 100) {
+		limit = 100;
 	}
 
 	const offset = Number(req.query.offset) || 0;
 	const totalGenres = await prisma.genre.count();
 
-	const genres = await prisma.genre.findMany();
+	const genres = await prisma.genre.findMany({
+		skip: offset,
+		take: limit,
+		select: {
+			name: true,
+		},
+	});
 	if (genres.length === 0) {
 		return next(
 			createCustomError(
@@ -28,7 +34,7 @@ export const getAllGenres = async (
 	}
 
 	res.json({
-		data: { genres },
 		pagination: { total: totalGenres, limit, offset },
+		data: { genres },
 	});
 };

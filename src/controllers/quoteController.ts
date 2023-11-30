@@ -4,9 +4,27 @@ import { createCustomError } from "../errors/customError";
 
 const prisma = new PrismaClient();
 
+type quote = {
+	text: string;
+	author: string;
+	genre: string;
+};
+
+type RandomQuoteResponse = quote;
+type QuotesResponse = {
+	data: {
+		quotes: quote[];
+	};
+	pagination: {
+		total: number;
+		limit: number;
+		offset: number;
+	};
+};
+
 export const getQuotes = async (
 	req: Request,
-	res: Response,
+	res: Response<QuotesResponse>,
 	next: Function
 ) => {
 	let limit = Number(req.query.limit) || 10;
@@ -18,7 +36,21 @@ export const getQuotes = async (
 	const quotes = await prisma.quote.findMany({
 		skip: offset,
 		take: limit,
+		select: {
+			text: true,
+			author: {
+				select: {
+					name: true,
+				},
+			},
+			genre: {
+				select: {
+					name: true,
+				},
+			},
+		},
 	});
+
 	if (quotes.length === 0) {
 		return next(
 			createCustomError(
@@ -28,20 +60,32 @@ export const getQuotes = async (
 		);
 	}
 
+	const quotesArr: quote[] = quotes.map((quote): quote => {
+		return {
+			text: quote.text,
+			author: quote.author.name,
+			genre: quote.genre.name,
+		};
+	});
+
 	const totalQuotes = await prisma.quote.count();
 	res.json({
-		data: { quotes },
 		pagination: { total: totalQuotes, limit, offset },
+		data: { quotes: quotesArr },
 	});
 };
 
-export const getRandomQuote = async (req: Request, res: Response) => {
+export const getRandomQuote = async (
+	req: Request,
+	res: Response<RandomQuoteResponse>
+) => {
 	const totalQuotes = await prisma.quote.count();
 	const random = Math.floor(Math.random() * totalQuotes);
 
 	const quote = await prisma.quote.findUnique({
 		where: { id: random },
-		include: {
+		select: {
+			text: true,
 			author: {
 				select: {
 					name: true,
@@ -56,10 +100,8 @@ export const getRandomQuote = async (req: Request, res: Response) => {
 	});
 
 	res.json({
-		data: {
-			quote: quote?.text,
-			author: quote?.author?.name,
-			genre: quote?.genre?.name,
-		},
+		text: quote?.text || "Unknown",
+		author: quote?.author?.name || "Unknown",
+		genre: quote?.genre?.name || "Unknown",
 	});
 };
