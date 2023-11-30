@@ -11,13 +11,13 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get("/api/v1/health", (req, res) => {
+app.get("/v1/health", (req, res) => {
 	res.status(200).json({ msg: "Alive!" });
 });
 
-app.use("/api/v1/author", authorRouter);
-app.use("/api/v1/genre", genreRouter);
-app.use("/api/v1/quote", quoteRouter);
+app.use("/v1/author", authorRouter);
+app.use("/v1/genre", genreRouter);
+app.use("/v1/quote", quoteRouter);
 
 app.use(errorHandler);
 app.use(notFound);
