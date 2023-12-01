@@ -14,7 +14,7 @@ A API with
 
 ## API End points & response
 
-Base URL: https://api-quoto.onrender.com/api/v1
+Base URL: https://api-quoto.onrender.com/v1
 
 Available end-points
 
