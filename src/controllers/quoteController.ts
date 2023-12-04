@@ -105,3 +105,54 @@ export const getRandomQuote = async (
 		genre: quote?.genre?.name || "Unknown",
 	});
 };
+
+export const getAuthorQuotes = async (
+	req: Request,
+	response: Response,
+	next: Function
+) => {
+	let limit = Number(req.query.limit) || 20;
+	if (limit > 10) {
+		limit = 10;
+	}
+	const offset = Number(req.query.offset) || 0;
+
+	const { author } = req.params;
+	const authorQuotes = await prisma.quote.findMany({
+		where: { author: { name: author } },
+		skip: offset,
+		take: limit,
+		select: {
+			text: true,
+			author: {
+				select: {
+					name: true,
+				},
+			},
+			genre: {
+				select: {
+					name: true,
+				},
+			},
+		},
+	});
+
+	if (authorQuotes.length === 0) {
+		return next(
+			createCustomError(`Could not find quotes with author: ${author}`, 404)
+		);
+	}
+
+	// re-organize the output
+	const retVal = authorQuotes.map((quote) => {
+		return {
+			text: quote.text,
+			author: quote.author.name,
+			genre: quote.genre.name,
+		};
+	});
+
+	return response.json({
+		data: { quotes: retVal },
+	});
+};
