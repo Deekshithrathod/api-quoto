@@ -112,12 +112,15 @@ export const getAuthorQuotes = async (
 	next: Function
 ) => {
 	let limit = Number(req.query.limit) || 20;
-	if (limit > 10) {
-		limit = 10;
+	if (limit > 20) {
+		limit = 20;
 	}
 	const offset = Number(req.query.offset) || 0;
 
 	const { author } = req.params;
+	const totalQuotesByAuthor = await prisma.quote.count({
+		where: { author: { name: req.params.author } },
+	});
 	const authorQuotes = await prisma.quote.findMany({
 		where: { author: { name: author } },
 		skip: offset,
@@ -153,6 +156,11 @@ export const getAuthorQuotes = async (
 	});
 
 	return response.json({
+		pagination: {
+			total: totalQuotesByAuthor,
+			limit,
+			offset,
+		},
 		data: { quotes: retVal },
 	});
 };
